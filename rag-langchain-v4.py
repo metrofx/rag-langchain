@@ -64,7 +64,7 @@ def main():
 
     # Sidebar
     st.sidebar.header("Information")
-    st.sidebar.info(f"Using OpenAI models:\nCompletion: {COMPLETION_MODEL}\nEmbedding: {EMBEDDING_MODEL}")
+    st.sidebar.info(f"Using OpenAI models:  \nCompletion: {COMPLETION_MODEL}  \nEmbedding: {EMBEDDING_MODEL}")
 
     # Load documents
     documents = load_documents("rag-storage/")
