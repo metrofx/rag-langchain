@@ -1,3 +1,4 @@
 .env
 rag-storage/
 .venv/
+*.code-workspace
