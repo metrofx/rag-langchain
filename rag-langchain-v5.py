@@ -25,6 +25,37 @@ COMPLETION_MODEL = os.getenv("COMPLETION_MODEL")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT")
 
+
+# Get authentication credentials from environment variables
+AUTH_USERNAME = os.getenv("AUTH_USERNAME")
+AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
+
+def check_password():
+    """Returns `True` if the user had the correct password."""
+
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["username"] == AUTH_USERNAME and st.session_state["password"] == AUTH_PASSWORD:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show inputs for username + password.
+        st.text_input("Username", on_change=password_entered, key="username")
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password incorrect, show input + error.
+        st.text_input("Username", on_change=password_entered, key="username")
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.error("😕 User not known or password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
 def load_documents(directory):
     documents = []
     for filename in os.listdir(directory):
@@ -87,62 +118,63 @@ def setup_qa_chain(vectorstore):
 def main():
     st.title("IDI Transcript Analysis QA System")
     
-    # Sidebar
-    st.sidebar.header("Information")
-    st.sidebar.info(f"Using OpenAI models:  \nCompletion: {COMPLETION_MODEL}  \nEmbedding: {EMBEDDING_MODEL}")
-    
-    # Load documents
-    documents = load_documents("rag-storage/")
-    
-    if documents:
-        # Display file names in sidebar
-        st.sidebar.header("Files in rag-storage")
-        for doc in documents:
-            st.sidebar.write(f"- {os.path.basename(doc.metadata['source'])}")
+    if check_password():
+        # Sidebar
+        st.sidebar.header("Information")
+        st.sidebar.info(f"Using OpenAI models:  \nCompletion: {COMPLETION_MODEL}  \nEmbedding: {EMBEDDING_MODEL}")
         
-        # Process documents
-        if 'vectorstore' not in st.session_state:
-            with st.spinner("Processing documents and creating vector store..."):
-                splits = split_documents(documents)
-                st.session_state.vectorstore = create_vector_store(splits)
-                st.session_state.qa_chain = setup_qa_chain(st.session_state.vectorstore)
-            st.success("Documents processed and vector store created!")
+        # Load documents
+        documents = load_documents("rag-storage/")
         
-        # Initialize chat history
-        if 'messages' not in st.session_state:
-            st.session_state.messages = []
-
-        # Display chat messages from history on app rerun
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        # Accept user input
-        if prompt := st.chat_input("What would you like to know about the IDI transcripts?"):
-            # Add user message to chat history
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            # Display user message in chat message container
-            with st.chat_message("user"):
-                st.markdown(prompt)
+        if documents:
+            # Display file names in sidebar
+            st.sidebar.header("Files in rag-storage")
+            for doc in documents:
+                st.sidebar.write(f"- {os.path.basename(doc.metadata['source'])}")
             
-            # Generate assistant response
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                with st.spinner("Generating answer..."):
-                    result = st.session_state.qa_chain({"query": prompt})
-                    response = result["result"]
-                    message_placeholder.markdown(response)
-                    
-                # Display sources
-                st.write("Sources:")
-                for doc in result["source_documents"]:
-                    st.write(f"- {os.path.basename(doc.metadata['source'])}")
+            # Process documents
+            if 'vectorstore' not in st.session_state:
+                with st.spinner("Processing documents and creating vector store..."):
+                    splits = split_documents(documents)
+                    st.session_state.vectorstore = create_vector_store(splits)
+                    st.session_state.qa_chain = setup_qa_chain(st.session_state.vectorstore)
+                st.success("Documents processed and vector store created!")
             
-            # Add assistant response to chat history
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            # Initialize chat history
+            if 'messages' not in st.session_state:
+                st.session_state.messages = []
 
-    else:
-        st.write("No documents found in rag-storage/. Please ensure your files are uploaded to this directory.")
+            # Display chat messages from history on app rerun
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            # Accept user input
+            if prompt := st.chat_input("What would you like to know about the IDI transcripts?"):
+                # Add user message to chat history
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                # Display user message in chat message container
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                
+                # Generate assistant response
+                with st.chat_message("assistant"):
+                    message_placeholder = st.empty()
+                    with st.spinner("Generating answer..."):
+                        result = st.session_state.qa_chain({"query": prompt})
+                        response = result["result"]
+                        message_placeholder.markdown(response)
+                        
+                    # Display sources
+                    st.write("Sources:")
+                    for doc in result["source_documents"]:
+                        st.write(f"- {os.path.basename(doc.metadata['source'])}")
+                
+                # Add assistant response to chat history
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+        else:
+            st.write("No documents found in rag-storage/. Please ensure your files are uploaded to this directory.")
 
 if __name__ == "__main__":
     main()
