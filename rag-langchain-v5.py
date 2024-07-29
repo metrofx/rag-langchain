@@ -13,6 +13,7 @@ from langchain_openai import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain_community.document_loaders import TextLoader
 from langchain.prompts import PromptTemplate
+from langchain.callbacks import get_openai_callback
 
 # Load environment variables
 load_dotenv()
@@ -140,9 +141,13 @@ def main():
                     st.session_state.qa_chain = setup_qa_chain(st.session_state.vectorstore)
                 st.success("Documents processed and vector store created!")
             
-            # Initialize chat history
+            # Initialize chat history and token usage
             if 'messages' not in st.session_state:
                 st.session_state.messages = []
+            if 'total_tokens' not in st.session_state:
+                st.session_state.total_tokens = 0
+            if 'total_cost' not in st.session_state:
+                st.session_state.total_cost = 0
 
             # Display chat messages from history on app rerun
             for message in st.session_state.messages:
@@ -161,14 +166,30 @@ def main():
                 with st.chat_message("assistant"):
                     message_placeholder = st.empty()
                     with st.spinner("Generating answer..."):
-                        result = st.session_state.qa_chain({"query": prompt})
-                        response = result["result"]
-                        message_placeholder.markdown(response)
+                        with get_openai_callback() as cb:
+                            result = st.session_state.qa_chain({"query": prompt})
+                            response = result["result"]
+                            message_placeholder.markdown(response)
+                        
+                        # Update and display token usage and cost
+                        st.session_state.total_tokens += cb.total_tokens
+                        st.session_state.total_cost += cb.total_cost
                         
                     # Display sources
-                    st.write("Sources:")
+                    st.write("***Sources:***")
                     for doc in result["source_documents"]:
                         st.write(f"- {os.path.basename(doc.metadata['source'])}")
+
+                    # Display token usage and cost after sources with Markdown styling
+                    st.markdown(
+                        f"""
+                        ```
+                        Tokens used: {cb.total_tokens} (Session: {st.session_state.total_tokens})
+                        Cost: ${cb.total_cost:.4f} (Session: ${st.session_state.total_cost:.4f})
+                        ```
+                        """,
+                        unsafe_allow_html=True
+                    )
                 
                 # Add assistant response to chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
