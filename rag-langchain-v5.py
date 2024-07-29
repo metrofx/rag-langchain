@@ -20,18 +20,10 @@ load_dotenv()
 # Set up OpenAI API key
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
-# Specify OpenAI models
-COMPLETION_MODEL = "gpt-4o-mini"
-EMBEDDING_MODEL = "text-embedding-3-large"
-
-# Hardcoded system prompt
-SYSTEM_PROMPT = """You are an AI assistant specializing in analyzing IDI (In-Depth Interview) transcripts. 
-Your role is to provide insights, answer questions, and help researchers understand the content of these interviews. 
-Base your responses on the information provided in the transcripts, and if you're unsure about something, say so. 
-"""
-
-# strip from prompt
-# Always maintain the confidentiality of the interviewees."""
+# Get models and system prompt from environment variables
+COMPLETION_MODEL = os.getenv("COMPLETION_MODEL")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT")
 
 def load_documents(directory):
     documents = []
