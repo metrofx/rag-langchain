@@ -121,7 +121,8 @@ def main():
     
     if check_password():
         # Sidebar
-        st.sidebar.header("Information")
+        #st.sidebar.image("logo.png", use_column_width=True)
+        st.sidebar.header("QA System")
         st.sidebar.info(f"Using OpenAI models:  \nCompletion: {COMPLETION_MODEL}  \nEmbedding: {EMBEDDING_MODEL}")
         
         # Load documents
