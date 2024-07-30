@@ -117,12 +117,14 @@ def setup_qa_chain(vectorstore):
     return qa_chain
 
 def main():
-    st.title("IDI Transcript Analysis QA System")
+    # Set the title of the tab
+    st.set_page_config(page_title="TAQS - Transcript Analysis QA System")
+    st.title("Transcript Analysis QA System")
     
     if check_password():
         # Sidebar
-        #st.sidebar.image("logo.png", use_column_width=True)
-        st.sidebar.header("QA System")
+        st.sidebar.image("logo.png", use_column_width=True)
+        st.sidebar.header("System")
         st.sidebar.info(f"Using OpenAI models:  \nCompletion: {COMPLETION_MODEL}  \nEmbedding: {EMBEDDING_MODEL}")
         
         # Load documents
@@ -156,7 +158,7 @@ def main():
                     st.markdown(message["content"])
 
             # Accept user input
-            if prompt := st.chat_input("What would you like to know about the IDI transcripts?"):
+            if prompt := st.chat_input("What would you like to know about the transcripts?"):
                 # Add user message to chat history
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 # Display user message in chat message container

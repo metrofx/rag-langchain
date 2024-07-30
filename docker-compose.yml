@@ -1,0 +1,11 @@
+# docker-compose.yml
+# version: '3.8'
+
+services:
+  streamlit:
+    build: ./
+    command: streamlit run rag-langchain-v5.py --server.port 8501
+    volumes:
+      - ./:/app
+    ports:
+      - "8501:8501"
