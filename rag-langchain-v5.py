@@ -119,7 +119,7 @@ def setup_qa_chain(vectorstore):
 def main():
     # Set the title of the tab
     st.set_page_config(page_title="TAQS - Transcript Analysis QA System")
-    st.title("Transcript Analysis QA System")
+    st.title("Transcript Analysis Q&A System")
     
     if check_password():
         # Sidebar
